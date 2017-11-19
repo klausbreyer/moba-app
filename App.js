@@ -1,20 +1,66 @@
 import React from 'react';
-import {StyleSheet, Text, View, WebView, TextInput} from 'react-native';
+import {StyleSheet, Text, View, WebView, TextInput, AsyncStorage, Button} from 'react-native';
 
 
 export default class App extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {url: 'https://', validUrl: false};
+        this.state = {url: 'http://', validUrl: false};
     }
 
-    setUrlValidity(url) {
-        console.log('hi');
-        const testUrl  = this.state.url + '/wp-content/plugins/moba/moba.css';
+    componentDidMount() {
+        try {
+            AsyncStorage.getItem('@MobaAppStore:url', (err, result) => {
+                console.log('result!');
+                console.log(result);
+
+                if (result !== null) {
+                    console.log('// We have data!!');
+                    console.log(result);
+                    this.checkUrl(result);
+
+                }
+            });
+        } catch (error) {
+            console.log('error' + error);
+        }
+    }
+
+    async setUrl(url) {
+        try {
+            await
+                AsyncStorage.setItem('@MobaAppStore:url', url);
+        } catch (error) {
+            console.log('error' + error);
+        }
+    }
+
+    async resetUrl(url) {
+        try {
+            await
+                AsyncStorage.removeItem('@MobaAppStore:url');
+            this.setState({url: 'http://'});
+        } catch (error) {
+            this.state = {url: 'http://', validUrl: false};
+        }
+    }
+
+    checkUrl(url) {
+        this.setState({url: url});
+        this.setUrl(url);
+        const testUrl = url + '/wp-content/plugins/moba/moba.css';
         return fetch(testUrl)
             .then((response) => {
-            console.log('true' + testUrl);
-                this.setState({validUrl: true})
+                if (200 === response.status) {
+                    console.log('true' + testUrl);
+                    console.log(response);
+                    this.setState({validUrl: true})
+                }
+                else {
+                    console.log('false' + testUrl);
+                    this.setState({validUrl: false})
+                }
+
             })
             .catch((error) => {
                 console.log('error' + testUrl);
@@ -22,39 +68,50 @@ export default class App extends React.Component {
             });
     }
 
-    onChangeUrl(url) {
-        this.setState({url: url});
-        this.setUrlValidity(url);
-    }
 
     renderWelcome() {
-
+        console.log('url');
+        console.log(this.state.url);
         return (
             <View style={styles.container}>
                 <Text>Willkommen in der App des moba Plugins!</Text>
                 <Text>Wie ist die URL (Startseite) deines Blogs? </Text>
                 <TextInput
+                    style={styles.textInput}
                     placeholder={'https://'}
-                           onChangeText={(url) => this.onChangeUrl(url)}
+                    onChangeText={(url) => this.checkUrl(url)}
+                    value={this.state.url}
                 />
-                {this.state.validUrl ? <Text style={styles.success}>Valide URL</Text> : <Text style={styles.error}>Leider keine valide URL</Text>}
+                {this.state.url !== 'http://' ?
+                    <Text style={styles.error}>Leider keine valide URL oder Plugin nicht gefunden. Falls du noch nicht
+                        fertig bist, tippe einfach weiter. Falls hier schon die volle URL steht und diese Meldung nicht
+                        verschwindet, solltest du überprüfen ob du das Plugin installiert hast. </Text> : null}
             </View>
         );
     }
 
     renderWebView() {
+        console.log(this.state.url + '/wp-admin/admin.php?page=moba%2Finterface.php');
         return (
-            <WebView
-                source={{uri: 'http://breyer.berlin/wp-admin/admin.php?page=moba%2Finterface.php'}}
-                style={styles.webView}
-            />
+            <View style={styles.container}>
+                <WebView
+                    source={{uri: this.state.url + '/wp-admin/admin.php?page=moba%2Finterface.php'}}
+                    style={styles.webView}
+                />
+                <Button
+                    onPress={() => this.resetUrl()}
+                    title="Logout"
+                    color="#841584"
+                    accessibilityLabel="Logout from your Blog Admin"
+                />
+            </View>
         )
     }
 
     render() {
         return (
-            true ?
-                this.renderWelcome() : this.renderWebView()
+            this.state.validUrl ?
+                this.renderWebView() : this.renderWelcome()
 
         )
     }
@@ -64,20 +121,20 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        alignItems: 'center',
+        flexDirection: 'column',
         justifyContent: 'center',
+        alignItems: 'stretch'
+    },
+    textInput: {
+        backgroundColor: '#ccc',
     },
     error: {
-      backgroundColor: 'red',
+        backgroundColor: 'red',
     },
     success: {
-      backgroundColor: 'green',
+        backgroundColor: 'green',
     },
     webView: {
-        marginTop: 20,
-
-        width: 350,
-        height: 350,
-
+        // marginTop: 20
     }
 });

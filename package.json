@@ -2,7 +2,7 @@
   "name": "moba-app",
   "version": "0.1.0",
   "private": true,
-  "license": "GPLv2 or later",
+  "license": "GPLv2",
   "devDependencies": {
     "jest-expo": "^22.0.0",
     "react-native-scripts": "1.7.0",
