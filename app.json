@@ -1,5 +1,15 @@
 {
   "expo": {
-    "sdkVersion": "22.0.0"
+    "sdkVersion": "22.0.0",
+    "name": "Wordpress Mobile Batch Upload",
+    "icon": "design/icon.png",
+    "version": "0.2.0",
+    "slug": "mobaapp",
+    "ios": {
+      "bundleIdentifier": "de.klausbreyer.moba"
+    },
+    "android": {
+      "package": "de.klausbreyer.moba"
+    }
   }
 }
